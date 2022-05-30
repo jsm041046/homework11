@@ -31,10 +31,6 @@ int main()
         {
         case 'z': case 'Z':
             Initialize(&adj,&VertexC); //adj와 VertexC 초기화
-            for(int i = 0;i < 10;i++)
-            {
-                adj[i].next = NULL;
-            }
             break;
         case 'i': case 'I':
             InsertVertex(&VertexC); //정점 추가
@@ -59,6 +55,10 @@ void Initialize(Link** p_adj,int* p_Ver)
         free(*p_adj);
 
     *p_adj = (Link*)malloc(sizeof(Link) * 10); //10개의 인접 리스트의 메모리 할당
+    for(int i = 0;i < 10;i++)
+    {
+        (*p_adj)[i].next = NULL; //인접 리스트 초기화
+    }
 
     *p_Ver = 0; //정점 갯수 초기화
     printf("초기화 성공\n");
@@ -98,37 +98,49 @@ void InsertEdge(Link* p_adj,int* p_Ver)
 
         Link* p, *prev; //인접 리스트에 대입할 위치를 결정짓는 포인터 p와 prev 선언
         p = p_adj[from].next; //p는 시작점에 해당하는 인접 리스트의 헤드에 접근
-        prev = &p_adj[from]; //prev는 시작점에 해당하는 인접 리스트에 직접 접근
+        prev = NULL;
         while(p != NULL) //p가 해당 인접리스트의 범위에서 벗어날 때 까지
         {
-            prev = p; //prev는 p로
-            p = p->next; //p는 다음 가르키는 포인터로 이동
             if(to <= p->vertex) //p가 가르키고 있는 정점의 번호가 추가하는 정점의 번호보다 크거나 같을 경우
                 break; //즉시 while을 빠져나간다
+            prev = p; //prev는 p로
+            p = p->next; //p는 다음 가르키는 포인터로 이동
         }
         
         Link* node = (Link*)malloc(sizeof(Link));
         node->vertex = to;
-        node->next = prev->next;
-        prev->next = node;
+        if(prev != NULL)
+        {
+            node->next = prev->next;
+            prev->next = node;
+        } else {
+            node->next = p_adj[from].next;
+            p_adj[from].next = node;
+        }
+        
         //해당하는 위치에 노드 대입(오름차순)
 
         //그래프는 Undirected graph이기 때문에 종점에서 시점으로 가는 간선도 추가한다
-        Link* p, *prev;
         p = p_adj[to].next;
-        prev = &p_adj[to];
+        prev = NULL;
         while(p != NULL)
         {
+            if(from <= p->vertex)
+                break;
             prev = p;
             p = p->next;
-            if(to <= p->vertex)
-                break;
         }
         
-        Link* node = (Link*)malloc(sizeof(Link));
-        node->vertex = from;
-        node->next = prev->next;
-        prev->next = node;
+        Link* rnode = (Link*)malloc(sizeof(Link));
+        rnode->vertex = from;
+        if(prev != NULL)
+        {
+            rnode->next = prev->next;
+            prev->next = rnode;
+        } else {
+            rnode->next = p_adj[to].next;
+            p_adj[to].next = rnode;
+        }
     } else {
         printf("해당 정점은 존재하지 않습니다.\n");
     }
