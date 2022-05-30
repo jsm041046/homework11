@@ -7,13 +7,24 @@ typedef struct DataLink {
 } Link;
 
 void Initialize(Link** p_adj,int* p_Ver);
-void InsertVertex(int* p_Ver);
+void InsertVertex(Link* p_adj,int* p_Ver);
 void InsertEdge(Link* p_adj,int* p_Ver);
 void PrintGraph(Link* p_adj,int* p_Ver);
+void BFS(Link* p_adj,int* p_Ver);
+void DFS(Link* p_adj,int* p_Ver);
+void enqueue(int Vertex);
+int dequeue();
+void push(int Vertex);
+int pop();
+int queue[10];
+int front = -1;
+int rear = -1;
+int stack[10];
+int top = -1;
 int main()
 {
-    Link* adj; //인접 리스트를 할당받을 변수
-    int VertexC; //정점의 갯수
+    Link* adj = NULL; //인접 리스트를 할당받을 변수
+    int VertexC = 0; //정점의 갯수
     printf("[----- 2021041046 전설민 -----]\n"); //학번 이름 출력
     char command;
     do
@@ -22,7 +33,7 @@ int main()
 		printf("                          Graph Searches                        \n");
 		printf("----------------------------------------------------------------\n");
 		printf(" Initialize Graph     = z                                       \n");
-		printf(" Insert Vertex        = i      Insert Edge                  = d \n");
+		printf(" Insert Vertex        = i      Insert Edge                  = e \n");
 		printf(" Depth First Search   = d      Breath First Search          = b \n");
 		printf(" Print Graph          = p      Quit                         = q \n");
 		printf("----------------------------------------------------------------\n");
@@ -33,13 +44,19 @@ int main()
             Initialize(&adj,&VertexC); //adj와 VertexC 초기화
             break;
         case 'i': case 'I':
-            InsertVertex(&VertexC); //정점 추가
+            InsertVertex(adj,&VertexC); //정점 추가
             break;
-        case 'd': case 'D':
+        case 'e': case 'E':
             InsertEdge(adj,&VertexC); //간선 추가
             break;
         case 'p': case 'P':
-            PrintGraph(adj,&VertexC);
+            PrintGraph(adj,&VertexC); //그래프 인접 리스트 출력
+            break;
+        case 'B': case 'b':
+            BFS(adj,&VertexC); //너비 우선 탐색
+            break;
+        case 'D': case 'd':
+            DFS(adj,&VertexC); //깊이 우선 탐색
             break;
         default:
             printf("잘못된 값을 입력하셨습니다.\n");
@@ -64,8 +81,13 @@ void Initialize(Link** p_adj,int* p_Ver)
     printf("초기화 성공\n");
 }
 
-void InsertVertex(int* p_Ver)
+void InsertVertex(Link* p_adj,int* p_Ver)
 {
+    if(p_adj == NULL) //인접 리스트가 초기화되지 않았을 경우
+    {
+        printf("인접 리스트가 초기화되지 않았습니다.\n");
+        return;
+    }
     if(*p_Ver < 10) //vertex는 10개까지의 제한이 있다
     {
         *p_Ver += 1; //정점 수 1개 추가
@@ -77,6 +99,11 @@ void InsertVertex(int* p_Ver)
 
 void InsertEdge(Link* p_adj,int* p_Ver)
 {
+    if(p_adj == NULL) //인접 리스트가 초기화되지 않았을 경우
+    {
+        printf("인접 리스트가 초기화되지 않았습니다.\n");
+        return;
+    }
     int from, to;
     printf("from : ");
     scanf("%d", &from);
@@ -116,30 +143,32 @@ void InsertEdge(Link* p_adj,int* p_Ver)
         } else {
             node->next = p_adj[from].next;
             p_adj[from].next = node;
-        }
-        
+        } 
         //해당하는 위치에 노드 대입(오름차순)
 
         //그래프는 Undirected graph이기 때문에 종점에서 시점으로 가는 간선도 추가한다
-        p = p_adj[to].next;
-        prev = NULL;
-        while(p != NULL)
+        if(from != to) //from과 to가 다를 경우
         {
-            if(from <= p->vertex)
+            p = p_adj[to].next;
+            prev = NULL;
+            while(p != NULL)
+            {
+                if(from <= p->vertex)
                 break;
-            prev = p;
-            p = p->next;
-        }
+                prev = p;
+                p = p->next;
+            }
         
-        Link* rnode = (Link*)malloc(sizeof(Link));
-        rnode->vertex = from;
-        if(prev != NULL)
-        {
-            rnode->next = prev->next;
-            prev->next = rnode;
-        } else {
-            rnode->next = p_adj[to].next;
-            p_adj[to].next = rnode;
+            Link* rnode = (Link*)malloc(sizeof(Link));
+            rnode->vertex = from;
+            if(prev != NULL)
+            {
+                rnode->next = prev->next;
+                prev->next = rnode;
+            } else {
+                rnode->next = p_adj[to].next;
+                p_adj[to].next = rnode;
+            }
         }
     } else {
         printf("해당 정점은 존재하지 않습니다.\n");
@@ -148,6 +177,11 @@ void InsertEdge(Link* p_adj,int* p_Ver)
 
 void PrintGraph(Link* p_adj,int* p_Ver)
 {
+    if(p_adj == NULL) //인접 리스트가 초기화되지 않았을 경우
+    {
+        printf("인접 리스트가 초기화되지 않았습니다.\n");
+        return;
+    }
     for(int i = 0;i < *p_Ver;i++) //모든 정점의 갯수만큼 반복
     {
         printf("[%d]",i); //정점 출력
@@ -159,4 +193,103 @@ void PrintGraph(Link* p_adj,int* p_Ver)
         }
         printf("\n");
     }
+}
+
+void BFS(Link* p_adj,int* p_Ver)
+{
+    if(p_adj == NULL) //인접 리스트가 초기화되지 않았을 경우
+    {
+        printf("인접 리스트가 초기화되지 않았습니다.\n");
+        return;
+    }
+    int* visited = (int*)malloc(sizeof(int) * *p_Ver);
+    for(int i = 0;i < *p_Ver;i++)
+    {
+        visited[i] = 0;
+    }
+    //방문된 노드를 기억하는 변수를 선언 후 초기화
+    enqueue(0); //시작 노드를 큐에 넣음
+    visited[0] = 1;
+    while(front != rear) //큐가 빌 때 까지
+    {
+        int temp = dequeue(); //큐에서 노드를 뺌
+        printf(" [%d] ->",temp); //노드를 출력
+        Link* p = p_adj[temp].next;
+        while(p != NULL) //인접 리스트를 통해 인접 노드를 탐색
+        {
+            if(visited[p->vertex] == 0)
+            {
+                enqueue(p->vertex); //인접 노드 중 방문하지 않은 노드들을 큐에 추가
+                visited[p->vertex] = 1; //해당 노드는 방문한 것으로 처리
+            }
+            p = p->next;
+        }
+    }
+    printf(" end\n");
+    free(visited); //visited 메모리 할당 해제
+}
+
+void DFS(Link* p_adj,int* p_Ver)
+{
+    if(p_adj == NULL) //인접 리스트가 초기화되지 않았을 경우
+    {
+        printf("인접 리스트가 초기화되지 않았습니다.\n");
+        return;
+    }
+    int* visited = (int*)malloc(sizeof(int) * *p_Ver);
+    for(int i = 0;i < *p_Ver;i++)
+    {
+        visited[i] = 0;
+    }
+    //방문된 노드를 기억하는 변수를 선언 후 초기화
+    int curr = 0; //현재 탐색하는 노드의 위치를 저장
+    push(0); //현재 탐색하는 노드를 스택에 넣음
+    visited[0] = 1;
+    printf(" [%d] ->",curr);
+    while(top != -1) //스택이 빌 때 까지
+    {
+        Link* p = p_adj[curr].next; //인접노드 탐색용 p
+        while(p != NULL) //p가 범위를 벗어날 때 까지
+        {
+            if(visited[p->vertex] == 0) //만약 방문하지 않은 정점을 p가 가르킨다면
+                break; //즉시 반복문 탈출
+            p = p->next; //p를 다음 인접노드로 이동
+        }
+        if(p == NULL) //방문하지 않은 인접노드가 없을 경우
+        {
+            curr = pop(); //스택에 저장된 노드를 pop함
+        } else { //방문하지 않은 노드가 있을 경우
+            curr = p->vertex; //탐색중인 노드를 해당 노드로 이동
+            push(p->vertex); //해당 노드를 스택에 저장
+            printf(" [%d] ->",p->vertex); //해당 노드 출력
+            visited[p->vertex] = 1;
+        }
+    }
+    printf(" end\n");
+    free(visited); //visited 메모리 할당 해제
+}
+
+void enqueue(int Vertex)
+{
+    rear = (rear + 1) % 10; //큐 추가(큐의 크기가 최대 가능한 정점의 수와 같으므로 큐가 찰 가능성은 없다)
+    queue[rear] = Vertex;
+}
+
+int dequeue()
+{
+    front = (front + 1) % 10;
+    return queue[front];
+}
+
+void push(int Vertex)
+{
+    top += 1; //스택 추가(스택의 크기가 최대 가능한 정점의 수와 같으므로 스택이 찰 가능성은 없다)
+    stack[top] = Vertex;
+}
+
+int pop()
+{
+    int temp = stack[top]; //top을 줄이기 전에 return을 먼저 하는 것이 불가능하므로 임시로 top의 값을 저장할 변수를 선언한다
+    top -= 1;
+    return temp;
 }
