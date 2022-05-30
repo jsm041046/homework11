@@ -67,7 +67,7 @@ int main()
             break;
         }
     } while (command != 'Q' && command != 'q');
-    
+    return 0;
 }
 
 void Initialize(Link** p_adj,int* p_Ver)
