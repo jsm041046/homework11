@@ -16,6 +16,7 @@ void enqueue(int Vertex);
 int dequeue();
 void push(int Vertex);
 int pop();
+void ReturnMemory(Link* p_adj);
 int queue[10];
 int front = -1;
 int rear = -1;
@@ -57,6 +58,9 @@ int main()
             break;
         case 'D': case 'd':
             DFS(adj,&VertexC); //깊이 우선 탐색
+            break;
+        case 'q': case 'Q':
+            ReturnMemory(adj); //adj의 메모리 반환
             break;
         default:
             printf("잘못된 값을 입력하셨습니다.\n");
@@ -292,4 +296,9 @@ int pop()
     int temp = stack[top]; //top을 줄이기 전에 return을 먼저 하는 것이 불가능하므로 임시로 top의 값을 저장할 변수를 선언한다
     top -= 1;
     return temp;
+}
+
+void ReturnMemory(Link* p_adj)
+{
+    free(p_adj); //p_adj의 메모리를 반환
 }
