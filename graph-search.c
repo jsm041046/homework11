@@ -16,7 +16,7 @@ void enqueue(int Vertex);
 int dequeue();
 void push(int Vertex);
 int pop();
-void ReturnMemory(Link* p_adj);
+void ReturnMemory(Link* p_adj, int Ver);
 int queue[10];
 int front = -1;
 int rear = -1;
@@ -60,7 +60,7 @@ int main()
             DFS(adj,&VertexC); //깊이 우선 탐색
             break;
         case 'q': case 'Q':
-            ReturnMemory(adj); //adj의 메모리 반환
+            ReturnMemory(adj,VertexC); //adj의 메모리 반환
             break;
         default:
             printf("잘못된 값을 입력하셨습니다.\n");
@@ -72,9 +72,23 @@ int main()
 
 void Initialize(Link** p_adj,int* p_Ver)
 {
-    if(*p_adj != NULL) //adj가 선언되어 있을 경우 초기화
+     //adj가 선언되어 있을 경우 초기화
+     if(*p_adj != NULL)
+     {
+        for(int i = 0;i < *p_Ver;i++) //정점의 수만큼 반복
+        {
+            Link* p = (*p_adj)[i].next; //p_adj의 링크 메모리 반환용
+            Link* temp;
+            while(p != NULL) //p가 범위를 벗어날 때 까지
+            {
+                temp = p->next; //메모리 반환 시 p에 있는 링크가 사라지므로 기억용 변수 temp를 사용한다
+                free(p); //링크 메모리 할당 해제
+                p = temp; //p는 다음 링크로 이동
+            }
+        }
         free(*p_adj);
-
+     }
+    
     *p_adj = (Link*)malloc(sizeof(Link) * 10); //10개의 인접 리스트의 메모리 할당
     for(int i = 0;i < 10;i++)
     {
@@ -298,7 +312,21 @@ int pop()
     return temp;
 }
 
-void ReturnMemory(Link* p_adj)
+void ReturnMemory(Link* p_adj,int Ver)
 {
-    free(p_adj); //p_adj의 메모리를 반환
+    if(p_adj != NULL)
+    {
+        for(int i = 0;i < Ver;i++) //정점의 수만큼 반복
+        {
+            Link* p = p_adj[i].next; //p_adj의 링크 메모리 반환용
+            Link* temp;
+            while(p != NULL) //p가 범위를 벗어날 때 까지
+            {
+                temp = p->next; //메모리 반환 시 p에 있는 링크가 사라지므로 기억용 변수 temp를 사용한다
+                free(p); //링크 메모리 할당 해제
+                p = temp; //p는 다음 링크로 이동
+            }
+        }
+        free(p_adj); //p_adj의 메모리를 반환
+    }
 }
